@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Secure File Upload</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f4f6f8;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      width: 420px;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 25px;
+    }
+
+    .upload-box {
+      border: 1px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 25px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+      background: #fafafa;
+    }
+
+    .upload-box:hover {
+      border-color: #2563eb;
+      background: #f9fbff;
+    }
+
+    .upload-text {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #374151;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background: #2563eb;
+      border: none;
+      color: white;
+      font-size: 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .btn:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .success {
+      color: #16a34a;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    .loading {
+      color: #2563eb;
+    }
+
+.scan {
+  color: #f59e0b;
+}
+
+.safe {
+  color: #16a34a;
+}
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <div class="title">Secure File Upload</div>
+  <div class="subtitle">Upload files securely to cloud storage</div>
+
+  <label class="upload-box">
+    <div class="upload-text">Click to select file</div>
+    <input type="file" id="fileInput" onchange="showFile()" />
+  </label>
+
+  <div class="file-name" id="fileName"></div>
+
+  <button class="btn" id="uploadBtn" onclick="uploadFile()">Upload File</button>
+
+  <div class="status" id="status"></div>
+
+  <div class="status" id="scanStatus"></div>
+
+</div>
+
+<script>
+function showFile() {
+  const file = document.getElementById("fileInput").files[0];
+  document.getElementById("fileName").innerText = file ? file.name : "";
+}
+
+async function uploadFile() {
+  const file = document.getElementById("fileInput").files[0];
+  const status = document.getElementById("status");
+  const scanStatus = document.getElementById("scanStatus");
+  const btn = document.getElementById("uploadBtn");
+
+  if (!file) {
+    alert("Please select a file");
+    return;
+  }
+
+  try {
+    btn.disabled = true;
+
+    // 🔍 SCAN SIMULATION START
+    scanStatus.innerText = "🔍 Scanning file...";
+    scanStatus.className = "status scan";
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    scanStatus.innerText = "✔ No threats found";
+    scanStatus.className = "status safe";
+
+    await new Promise(resolve => setTimeout(resolve, 800));
+    // 🔍 SCAN SIMULATION END
+
+    status.innerText = "Uploading...";
+    status.className = "status loading";
+
+    const res = await fetch(
+      `http://localhost:5000/generate-upload-url?fileName=${file.name}&fileType=${file.type}`
+    );
+
+    const data = await res.json();
+
+    await fetch(data.uploadURL, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type,
+      },
+      body: file,
+    });
+
+    status.innerText = "Upload successful";
+    status.className = "status success";
+
+  } catch (err) {
+    console.error(err);
+    status.innerText = "Upload failed";
+    status.className = "status error";
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>
